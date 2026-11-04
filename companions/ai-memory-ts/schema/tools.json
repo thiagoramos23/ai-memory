@@ -839,6 +839,40 @@
     },
     "required": []
   },
+  "memory_recall": {
+    "properties": {
+      "after": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "limit": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "project": {
+        "type": [
+          "null",
+          "string"
+        ]
+      },
+      "query": {
+        "type": "string"
+      },
+      "workspace": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "required": [
+      "query"
+    ]
+  },
   "memory_recent": {
     "properties": {
       "limit": {
@@ -898,6 +932,29 @@
   },
   "memory_status": {
     "properties": {
+      "project": {
+        "type": [
+          "null",
+          "string"
+        ]
+      },
+      "workspace": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "required": []
+  },
+  "memory_wake": {
+    "properties": {
+      "budget_bytes": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
       "project": {
         "type": [
           "null",
@@ -1024,6 +1081,28 @@
     "required": [
       "body",
       "path"
+    ]
+  },
+  "memory_zoom": {
+    "properties": {
+      "node_id": {
+        "type": "string"
+      },
+      "project": {
+        "type": [
+          "null",
+          "string"
+        ]
+      },
+      "workspace": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "required": [
+      "node_id"
     ]
   }
 }

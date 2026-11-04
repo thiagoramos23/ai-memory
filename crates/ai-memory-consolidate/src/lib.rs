@@ -21,6 +21,7 @@ pub mod dream;
 pub mod embed;
 pub mod entropy_filter;
 pub mod experience;
+pub mod history;
 pub mod keep_tokens;
 mod link_guard;
 pub mod lint;

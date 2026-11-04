@@ -154,6 +154,9 @@ scope. Arguments are the server's wire names in camelCase
 
 Not wrapped (call them with `callTool`):
 
+- `memory_wake`: bounded history overview; use callTool with budget_bytes and explicit scope
+- `memory_zoom`: history span navigation; use callTool with node_id and explicit scope
+- `memory_recall`: literal source scans; use callTool with query, after and explicit scope
 - `memory_consolidate`: maintenance job that needs the server's LLM; use callTool
 - `memory_lint`: maintenance job that needs the server's LLM; use callTool
 - `memory_auto_improve`: maintenance job that needs the server's LLM; use callTool

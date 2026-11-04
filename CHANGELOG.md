@@ -11,6 +11,14 @@ version in [`docs/changelog/`](docs/changelog/):
 
 ## [Unreleased]
 
+### Added
+
+- Added bounded project history alongside wiki search: `memory_wake`,
+  `memory_zoom`, and literal source search with `memory_recall`. Background
+  summaries use the existing SQLite writer and optional LLM, with an extractive
+  fallback. Opted-in startup briefs include history; source edits, deletion,
+  and expiry invalidate dependent summaries.
+
 ## [3.3.3] - 2026-11-03
 
 ### Fixed

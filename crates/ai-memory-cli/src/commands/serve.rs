@@ -2218,6 +2218,33 @@ async fn start_maintenance_scheduler(
         });
 
     let mut tasks = Vec::new();
+    if maintenance_enabled {
+        let reader = reader.clone();
+        let writer = writer.clone();
+        let llm = llm.clone();
+        tasks.push(tokio::spawn(async move {
+            loop {
+                // Bound each pass so a large import cannot monopolize the writer.
+                for _ in 0..16 {
+                    match ai_memory_consolidate::history::compact_history_once(
+                        &reader,
+                        &writer,
+                        llm.as_deref(),
+                    )
+                    .await
+                    {
+                        Ok(true) => {}
+                        Ok(false) => break,
+                        Err(error) => {
+                            tracing::warn!(%error, "history compaction failed; retrying next pass");
+                            break;
+                        }
+                    }
+                }
+                tokio::time::sleep(Duration::from_secs(5)).await;
+            }
+        }));
+    }
     if maintenance_enabled && forget_sweep_interval_secs > 0 {
         let reader = reader.clone();
         let writer = writer.clone();
@@ -4670,8 +4697,9 @@ mod tests {
                 false,
             )
             .await;
-            // One enabled lint/sweep job plus the independent hollow-project job.
-            assert_eq!(tasks.len(), 2);
+            // One enabled lint/sweep job, history compaction, and the
+            // independent hollow-project job.
+            assert_eq!(tasks.len(), 3);
             for task in tasks {
                 task.abort();
             }
@@ -4690,7 +4718,8 @@ mod tests {
             embedding_backfill_interval_secs: 0,
             reconcile_tombstones_deleted_pages: false,
         };
-        // Key at 0: the baseline task count (one lint job + hollow-project job).
+        // Key at 0: the baseline task count (lint, history compaction, and
+        // hollow-project jobs).
         let (_tmp, store, wiki, _ws, _first, _second) = two_project_wiki().await;
         let tasks = start_maintenance_scheduler(
             baseline.clone(),
@@ -4710,7 +4739,7 @@ mod tests {
             false,
         )
         .await;
-        assert_eq!(tasks.len(), 2);
+        assert_eq!(tasks.len(), 3);
         for task in tasks {
             task.abort();
         }
@@ -4737,7 +4766,7 @@ mod tests {
             false,
         )
         .await;
-        assert_eq!(tasks.len(), 3);
+        assert_eq!(tasks.len(), 4);
         for task in tasks {
             task.abort();
         }

@@ -53,6 +53,12 @@ pub struct StartupContextAcceptance {
 
 /// Commands accepted by the writer thread.
 pub(crate) enum WriteCmd {
+    PublishHistory {
+        merge: crate::history::HistoryMerge,
+        summary: String,
+        llm: bool,
+        reply: oneshot::Sender<StoreResult<bool>>,
+    },
     GetOrCreateWorkspace {
         name: String,
         reply: oneshot::Sender<StoreResult<WorkspaceId>>,
@@ -905,6 +911,26 @@ struct WriterInner {
 }
 
 impl WriterHandle {
+    /// Publish a derived history summary if both source revisions still match.
+    ///
+    /// # Errors
+    /// Propagates writer and SQL errors.
+    pub async fn publish_history(
+        &self,
+        merge: crate::history::HistoryMerge,
+        summary: String,
+        llm: bool,
+    ) -> StoreResult<bool> {
+        let (tx, rx) = oneshot::channel();
+        self.send(WriteCmd::PublishHistory {
+            merge,
+            summary,
+            llm,
+            reply: tx,
+        })
+        .await?;
+        rx.await.map_err(|_| StoreError::WriterClosed)?
+    }
     /// Take ownership of `conn` and spawn the writer thread.
     pub(crate) fn spawn(conn: Connection) -> Self {
         let (tx, rx) = mpsc::channel(1024);
@@ -3992,6 +4018,15 @@ fn worker_loop(mut conn: Connection, mut rx: mpsc::Receiver<WriteCmd>) {
             WriteCmd::GetOrCreateWorkspace { name, reply } => {
                 let result = ops::get_or_create_workspace(&mut conn, &name);
                 send_or_warn(reply, result, "get_or_create_workspace");
+            }
+            WriteCmd::PublishHistory {
+                merge,
+                summary,
+                llm,
+                reply,
+            } => {
+                let result = crate::history::publish(&mut conn, &merge, &summary, llm);
+                send_or_warn(reply, result, "publish_history");
             }
             WriteCmd::GetOrCreateProject {
                 workspace_id,
