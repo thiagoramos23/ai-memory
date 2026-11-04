@@ -36,6 +36,18 @@ const SCOPE = ["workspace", "project"] as const;
 
 /** Every MCP tool the server lists, keyed by tool name. */
 export const TOOL_COVERAGE: Readonly<Record<string, ToolClassification>> = {
+  memory_wake: {
+    status: "not_exposed",
+    reason: "bounded history overview; use callTool with budget_bytes and explicit scope",
+  },
+  memory_zoom: {
+    status: "not_exposed",
+    reason: "history span navigation; use callTool with node_id and explicit scope",
+  },
+  memory_recall: {
+    status: "not_exposed",
+    reason: "literal source scans; use callTool with query, after and explicit scope",
+  },
   memory_write_page: {
     status: "wrapped",
     methods: ["pages.write", "pages.update"],

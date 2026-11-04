@@ -14,6 +14,7 @@ mod client_activity;
 mod fts_drift_status;
 mod fts_stopwords_config;
 mod handoff_ownership;
+mod history_tree;
 mod identity_resolution;
 mod idle_session_end;
 mod live_token_usage;

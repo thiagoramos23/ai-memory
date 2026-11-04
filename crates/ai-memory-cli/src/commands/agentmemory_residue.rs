@@ -5,8 +5,8 @@
 //! server entry still registered in a harness config, and the memory-usage
 //! guideline block `agentmemory connect` writes into native rules files. An
 //! agent reading that block keeps calling tools that no longer exist, and one
-//! of them, `memory_consolidate`, is also an ai-memory tool with different
-//! arguments.
+//! of them, `memory_consolidate` and `memory_recall`, are also ai-memory tools
+//! with different arguments.
 //!
 //! This check only reads. It names each file and what it found there and
 //! prints the line to fix by hand; it never edits or deletes another tool's
@@ -48,7 +48,6 @@ pub(crate) const AGENTMEMORY_ONLY_TOOLS: &[&str] = &[
     "memory_obsidian_export",
     "memory_patterns",
     "memory_profile",
-    "memory_recall",
     "memory_reflect",
     "memory_relations",
     "memory_routine_run",
@@ -76,7 +75,7 @@ pub(crate) const AGENTMEMORY_ONLY_TOOLS: &[&str] = &[
 ];
 
 /// Tool names both servers expose, with different arguments and meaning.
-pub(crate) const COLLIDING_TOOLS: &[&str] = &["memory_consolidate"];
+pub(crate) const COLLIDING_TOOLS: &[&str] = &["memory_consolidate", "memory_recall"];
 
 /// The npm package agentmemory's MCP entries launch.
 const MCP_PACKAGE: &str = "@agentmemory/";
@@ -443,7 +442,7 @@ mod tests {
 
     #[test]
     fn a_block_without_markers_is_still_found_by_tool_names() {
-        let text = "Rules\n\nRecall with memory_recall before answering.\n";
+        let text = "Rules\n\nRecall with memory_lesson_recall before answering.\n";
         let finding = scan_rules_file(Path::new("GEMINI.md"), text).unwrap();
         assert_eq!(finding.location, "line 3");
         assert!(finding.colliding_tools.is_empty());
@@ -508,7 +507,10 @@ mod tests {
         let found = scan_mcp_config(Path::new("/h/.cursor/mcp.json"), cursor);
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].location, "mcpServers.agentmemory");
-        assert_eq!(found[0].colliding_tools, ["memory_consolidate"]);
+        assert_eq!(
+            found[0].colliding_tools,
+            ["memory_consolidate", "memory_recall"]
+        );
 
         // Renamed entry, JSONC with comments, nested per-project map.
         let claude = "{\n  // user config\n  \"projects\": {\"/w/api\": {\"mcpServers\": {\"mem\": {\"command\": \"npx\", \"args\": [\"@agentmemory/mcp\"]}}}}\n}";

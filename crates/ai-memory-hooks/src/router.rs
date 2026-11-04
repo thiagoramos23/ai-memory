@@ -2866,7 +2866,43 @@ async fn render_requested_session_brief(
             ai_memory_core::SlotVisibility::for_viewer(state.per_user_slots, viewer),
         )
         .await?;
-    Ok(render_session_brief(&core, &recent, budget))
+    let mut brief = render_session_brief(&core, &recent, budget).unwrap_or_default();
+    // History has its own budget; harness ceilings still cap the combined
+    // standing brief and historical context. Never displace standing rules.
+    let history_budget = ai_memory_store::history::HISTORY_WAKE_BYTES.min(
+        budget_ceiling
+            .unwrap_or(usize::MAX)
+            .saturating_sub(brief.len())
+            .saturating_sub(512),
+    );
+    if history_budget >= 1024 {
+        match state
+            .reader
+            .history_wake(workspace_id, project_id, history_budget)
+            .await
+        {
+            Ok(history) if !history.entries.is_empty() => {
+                if let Ok(mut json) = serde_json::to_string(&history) {
+                    escape_untrusted_history_tail(&mut json, 0);
+                    let section = format!(
+                        "\n\n## Project history\n{}\n{}\n{}\n{}\n",
+                        ai_memory_core::UNTRUSTED_MEMORY_NOTICE,
+                        UNTRUSTED_HISTORY_START,
+                        json,
+                        UNTRUSTED_HISTORY_END,
+                    );
+                    if section.len() <= history_budget + 512 {
+                        brief.push_str(&section);
+                    }
+                }
+            }
+            Ok(_) => {}
+            Err(error) => {
+                tracing::warn!(%error, "history overview unavailable; keeping standing brief")
+            }
+        }
+    }
+    Ok((!brief.is_empty()).then_some(brief))
 }
 
 /// An explicit `[profile]` flag forwarded by the client: `Some` when the

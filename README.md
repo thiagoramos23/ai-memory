@@ -596,6 +596,12 @@ install`, `home.packages`), install `git` next to it.
 
 ## Everyday use
 
+For a bounded historical overview, call `memory_wake`; use `memory_zoom` to
+expand its spans to source pages. `memory_recall` searches full source text
+literally, while `memory_query` keeps the existing general search. Summaries
+are capped at 2 KiB and the default history response at 8 KiB. See
+[bounded project history](docs/history-tree.md) for coverage and pagination.
+
 Day to day, you mostly do not think about ai-memory. Hooks capture
 prompts, tool calls, and session boundaries; session end turns them into
 readable wiki pages; the next session starts with a handoff.

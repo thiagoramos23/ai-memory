@@ -22,6 +22,7 @@ pub mod decay;
 mod error;
 mod fts_query;
 mod grants;
+pub mod history;
 mod maintenance;
 mod migrations;
 mod ops;
